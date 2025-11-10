@@ -1,0 +1,412 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==================== ЭНУМЫ ====================
+enum SystemRole {
+  SUPER_ADMIN
+  ADMIN
+  DEPARTMENT_HEAD
+  TEACHER
+  STUDENT
+}
+
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum WeekType {
+  EVEN // Четная неделя
+  ODD  // Нечетная неделя
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+// ==================== ПОЛЬЗОВАТЕЛИ И РОЛИ ====================
+// Базовый пользователь (только аутентификация)
+model User {
+  id        String   @id @default(uuid())
+  login     String   @unique
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles    UserRole[]
+  sessions Session[]
+  logs     SecurityLog[]
+
+  @@index([email])
+  @@index([login])
+  @@map("users")
+}
+
+// Роли пользователя (один user может иметь несколько ролей)
+model UserRole {
+  id         String     @id @default(uuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       SystemRole
+  assignedAt DateTime   @default(now())
+  assignedBy String     // userId того, кто назначил
+  isActive   Boolean    @default(true)
+
+  profile Profile?
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@index([role])
+  @@map("user_roles")
+}
+
+// ==================== ПРОФИЛИ ====================
+// Общий профиль (персональные данные для любой роли)
+model Profile {
+  id         String   @id @default(uuid())
+  userRoleId String   @unique
+  userRole   UserRole @relation(fields: [userRoleId], references: [id], onDelete: Cascade)
+
+  // Персональные данные
+  firstName   String
+  lastName    String
+  middleName  String?
+  gender      String?   // 'male' | 'female' | 'other'
+  dateOfBirth DateTime?
+  phone       String?
+  address     String?
+
+  createdAt     DateTime  @default(now())
+  deactivatedAt DateTime?
+
+  // Специфичные профили (только один активен в зависимости от роли)
+  studentProfile        StudentProfile?
+  teacherProfile        TeacherProfile?
+  adminProfile          AdminProfile?
+  departmentHeadProfile DepartmentHeadProfile?
+
+  // Заявки
+  applicationsCreated  Application[] @relation("ApplicationCreator")
+  applicationsReviewed Application[] @relation("ApplicationReviewer")
+
+  @@index([lastName, firstName])
+  @@map("profiles")
+}
+
+// ==================== СПЕЦИАЛИЗИРОВАННЫЕ ПРОФИЛИ ====================
+// Профиль студента
+model StudentProfile {
+  id        String  @id @default(uuid())
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  studentId      String   @unique // Студенческий билет
+  group          String
+  course         Int
+  specialization String?
+  faculty        String?
+  department     String?
+  enrollmentYear Int?
+  graduationYear Int?
+  gpa            Float?   @default(0)
+  joinedAt       DateTime @default(now())
+
+  contracts  Contract[]
+  grades     Grade[]
+  attendance Attendance[]
+
+  @@index([group])
+  @@index([course])
+  @@index([faculty])
+  @@map("student_profiles")
+}
+
+// Профиль преподавателя
+model TeacherProfile {
+  id        String  @id @default(uuid())
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  faculty         String?
+  department      String?
+  position        String? // Должность
+  academicDegree  String? // Ученая степень
+  academicTitle   String? // Ученое звание
+  experienceYears Int?
+  education       String? // ВУЗ
+  biography       String? @db.Text
+
+  schedules       Schedule[]
+  gradesGiven     Grade[]
+  teacherSubjects TeacherSubject[]
+
+  @@index([department])
+  @@index([faculty])
+  @@map("teacher_profiles")
+}
+
+// Профиль администратора
+model AdminProfile {
+  id        String  @id @default(uuid())
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  department      String?
+  position        String?
+  permissions     String[] // Список разрешений
+  scope           String?  // Область ответственности
+  experienceYears Int?
+
+  @@map("admin_profiles")
+}
+
+// Профиль заведующего кафедрой
+model DepartmentHeadProfile {
+  id        String  @id @default(uuid())
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  department      String
+  faculty         String
+  permissions     String[]
+  experienceYears Int?
+
+  @@index([department])
+  @@index([faculty])
+  @@map("department_head_profiles")
+}
+
+// ==================== ЗАЯВКИ ====================
+model Application {
+  id     String            @id @default(uuid())
+  type   String            // 'NEW_USER' | 'ROLE_CHANGE' | 'PROFILE_UPDATE'
+  status ApplicationStatus @default(PENDING)
+
+  // Данные заявителя
+  applicantEmail String
+  applicantName  String
+  applicantPhone String?
+
+  // Запрашиваемые данные
+  requestedRole SystemRole
+  justification String        @db.Text
+  faculty       String?
+  department    String?
+  position      String?
+
+  // Кто создал
+  createdByProfileId String
+  createdBy          Profile  @relation("ApplicationCreator", fields: [createdByProfileId], references: [id])
+  createdAt          DateTime @default(now())
+
+  // Кто рассмотрел
+  reviewedByProfileId String?
+  reviewedBy          Profile?  @relation("ApplicationReviewer", fields: [reviewedByProfileId], references: [id])
+  reviewedAt          DateTime?
+  reviewComment       String?   @db.Text
+
+  @@index([status])
+  @@index([applicantEmail])
+  @@index([createdAt])
+  @@map("applications")
+}
+
+// ==================== СЕССИИ И БЕЗОПАСНОСТЬ ====================
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model SecurityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  event     String   // 'LOGIN' | 'LOGOUT' | 'FAILED_LOGIN' | 'PASSWORD_CHANGE' и т.д.
+  ipAddress String?
+  userAgent String?
+  metadata  String?  @db.Text // JSON с дополнительными данными
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([event])
+  @@index([timestamp])
+  @@index([ipAddress])
+  @@map("security_logs")
+}
+
+// ==================== АКАДЕМИЧЕСКИЕ МОДЕЛИ ====================
+// Предметы
+model Subject {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  code        String? @unique
+  description String? @db.Text
+  credits     Int?    // Количество кредитов
+  isActive    Boolean @default(true)
+
+  schedules       Schedule[]
+  grades          Grade[]
+  attendance      Attendance[]
+  teacherSubjects TeacherSubject[]
+
+  @@index([code])
+  @@map("subjects")
+}
+
+// Связь преподаватель-предмет (кто что ведет)
+model TeacherSubject {
+  id        String         @id @default(uuid())
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  semester String? // 'FALL' | 'SPRING'
+  year     Int?
+  isActive Boolean @default(true)
+
+  @@unique([teacherId, subjectId, semester, year])
+  @@index([teacherId])
+  @@index([subjectId])
+  @@map("teacher_subjects")
+}
+
+// Расписание
+model Schedule {
+  id        String         @id @default(uuid())
+  subjectId String
+  subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  group     String
+  dayOfWeek DayOfWeek
+  startTime String // "09:00"
+  endTime   String // "10:30"
+  room      String
+  weekType  WeekType? // null = каждую неделю
+  
+  createdAt DateTime @default(now())
+
+  @@index([group])
+  @@index([teacherId])
+  @@index([subjectId])
+  @@index([dayOfWeek])
+  @@map("schedules")
+}
+
+// Оценки
+model Grade {
+  id        String         @id @default(uuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  score     Float
+  maxScore  Float          @default(100) // Максимальный балл
+  gradeType String?        // 'MIDTERM' | 'FINAL' | 'HOMEWORK' | 'QUIZ'
+  dateGiven DateTime       @default(now())
+  comment   String?        @db.Text
+
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@index([dateGiven])
+  @@map("grades")
+}
+
+// Посещаемость
+model Attendance {
+  id        String           @id @default(uuid())
+  studentId String
+  student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  date    DateTime
+  status  AttendanceStatus
+  comment String?          @db.Text
+
+  @@unique([studentId, subjectId, date])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([date])
+  @@index([status])
+  @@map("attendances")
+}
+
+// ==================== КОНТРАКТЫ И ФИНАНСЫ ====================
+// Контракты студентов
+model Contract {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  contractNumber String   @unique
+  contractType   String   // 'FULL' | 'PARTIAL' | 'FREE'
+  amount         Float
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean  @default(true)
+  
+  debts     ContractDebt[]
+  createdAt DateTime       @default(now())
+
+  @@index([studentId])
+  @@index([contractNumber])
+  @@index([isActive])
+  @@map("contracts")
+}
+
+// Задолженности по контракту
+model ContractDebt {
+  id         String    @id @default(uuid())
+  contractId String
+  contract   Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  
+  amountDue   Float
+  dueDate     DateTime
+  paid        Boolean   @default(false)
+  paymentDate DateTime?
+  comment     String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([contractId])
+  @@index([paid])
+  @@index([dueDate])
+  @@map("contract_debts")
+}
