@@ -7,8 +7,8 @@ import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception
 import { UnauthorizedException } from '@nestjs/common/exceptions/unauthorized.exception';
 
 @Injectable()
-export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
+export class AuthApplicationService {
+  private readonly logger = new Logger(AuthApplicationService.name);
 
   constructor(
     private readonly userService: UserService,
