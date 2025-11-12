@@ -24,7 +24,7 @@ yarn install
 ```
 DATABASE_URL="postgresql://<username>:<password>@localhost:5432/student_control?schema=public"
 JWT_SECRET="your_jwt_secret"
-IS_PUBLIC_KEY="isPublic"
+IS_PUBLIC_KEY="isPublic" 
 ROLES_KEY="roles"
 DB_HOST="localhost"
 DB_PORT="5432"
