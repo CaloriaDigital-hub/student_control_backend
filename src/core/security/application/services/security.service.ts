@@ -23,14 +23,14 @@ export class SecurityService {
         },
       });
     } catch (error) {
-      // Не падаем если логирование не удалось
+      
       console.error('Failed to log security event:', error);
     }
   }
 
   async checkSuspiciousActivity(email: string, ip: string): Promise<boolean> {
     try {
-      // Проверяем попытки входа за последний час
+      
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
       const recentAttempts = await this.prisma.securityLog.count({
@@ -41,7 +41,7 @@ export class SecurityService {
         },
       });
 
-      return recentAttempts > 10; // Более 10 попыток в час - подозрительно
+      return recentAttempts > 10;
     } catch (error) {
       return false;
     }

@@ -1,17 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UserService } from 'src/modules/user/user.public';
+import { UserApplicationService } from 'src/modules/user/user.public';
 import { PasswordService, JwtService } from 'src/core/security/security.public';
 import { SecurityService } from '../../../security/security.public';
-import * as bcrypt from 'bcrypt';
-import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { UnauthorizedException } from '@nestjs/common/exceptions/unauthorized.exception';
+
 
 @Injectable()
-export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
+export class AuthApplicationService {
+  private readonly logger = new Logger(AuthApplicationService.name);
 
   constructor(
-    private readonly userService: UserService,
+    private readonly userService: UserApplicationService,
     private readonly passwordService: PasswordService,
     private readonly jwtService: JwtService,
     private readonly securityService: SecurityService,

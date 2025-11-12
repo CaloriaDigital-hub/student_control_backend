@@ -1,13 +1,13 @@
 // src/core/auth/infrastructure/resolvers/auth.resolver.ts
 import { Resolver, Mutation, Args, Query, Context } from '@nestjs/graphql';
-import { AuthService } from '../../application/services/auth.service';
+import { AuthApplicationService } from '../../application/services/auth.service';
 import { LoginInput } from '../dto/login.input';
 import { AuthResponse } from '../dto/auth.response';
 import { Public } from 'src/common/decorators/public.decorator';
 
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthApplicationService) { }
 
   @Query(() => String)
   @Public()

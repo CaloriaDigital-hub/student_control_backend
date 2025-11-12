@@ -18,7 +18,7 @@ export class GraphQLExceptionFilter implements GqlExceptionFilter {
 
     this.logger.warn(`GraphQL Error (${statusCode}): ${message}`);
 
-    // возвращаем упрощённый формат
+    
     return {
       message,
       code:

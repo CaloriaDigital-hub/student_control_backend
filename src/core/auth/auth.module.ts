@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { UserModule } from 'src/modules/user/user.module';
-import { AuthService } from './application/services/auth.service';
+import { AuthApplicationService } from './application/services/auth.service';
 
 import { AuthResolver } from './infrastructure/resolvers/auth.resolver';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
@@ -14,14 +14,14 @@ import { SecurityService } from '../security/security.public';
     UserModule,
     PassportModule,
     SecurityModule
-    // УБИРАЕМ JwtModule - он теперь в SecurityModule
+    
   ],
   providers: [
-    AuthService,  
+    AuthApplicationService,  
     AuthResolver,
     SecurityService,
     JwtStrategy,
   ],
-  exports: [AuthService], // Только AuthService для внешнего использования
+  exports: [AuthApplicationService],
 })
 export class AuthModule {}

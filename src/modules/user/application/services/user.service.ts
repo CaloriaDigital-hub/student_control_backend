@@ -5,7 +5,7 @@ import { User } from '../../domain/entities/user.entity';
 import { SystemRole, UserRole } from '@prisma/client';
 
 @Injectable()
-export class UserService {
+export class UserApplicationService {
   constructor(private readonly userRepository: UserRepository) { }
 
   async findByEmail(email: string): Promise<User | null> {

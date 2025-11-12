@@ -7,7 +7,7 @@ export const CurrentUser = createParamDecorator(
     const ctx = GqlExecutionContext.create(context);
     const request = ctx.getContext().req;
     
-    // Возвращаем пользователя из request (добавляется в JwtStrategy)
+    
     return request.user;
   },
 );
