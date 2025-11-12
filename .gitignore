@@ -52,7 +52,9 @@ pids
 *.seed
 *.pid.lock
 
-*.yarn.lock
+
+prisma/migrations
+yarn.lock
 
 yarn.lock
 
