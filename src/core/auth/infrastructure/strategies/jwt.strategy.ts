@@ -16,13 +16,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // payload содержит { email: string, sub: string (userId) }
+    
     const user = await this.userService.findById(payload.sub);
     if (!user) {
       throw new Error('User not found');
     }
     
-    // Возвращаемый объект добавляется в request.user
+    
     return {
       id: user.id,
       email: user.email,

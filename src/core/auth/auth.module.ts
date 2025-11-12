@@ -14,7 +14,7 @@ import { SecurityService } from '../security/security.public';
     UserModule,
     PassportModule,
     SecurityModule
-    // УБИРАЕМ JwtModule - он теперь в SecurityModule
+    
   ],
   providers: [
     AuthApplicationService,  
@@ -22,6 +22,6 @@ import { SecurityService } from '../security/security.public';
     SecurityService,
     JwtStrategy,
   ],
-  exports: [AuthApplicationService], // Только AuthService для внешнего использования
+  exports: [AuthApplicationService],
 })
 export class AuthModule {}
