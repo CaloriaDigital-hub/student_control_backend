@@ -13,8 +13,7 @@ export class AuthResponse {
 
 
 
-  @Field(() => String, { nullable: true })
-  userId?: string;
+  
 
   @Field(() => Boolean, { nullable: true })
   success?: boolean;
