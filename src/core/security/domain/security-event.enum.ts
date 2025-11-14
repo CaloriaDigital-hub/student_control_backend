@@ -1,0 +1,5 @@
+export enum SecurityEvent {
+    SUCCESSFUL_LOGIN = 'SUCCESSFUL_LOGIN',
+    FAILED_LOGIN = 'FAILED_LOGIN',
+    LOGOUT = 'LOGOUT',
+}

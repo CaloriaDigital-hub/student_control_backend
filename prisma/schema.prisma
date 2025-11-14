@@ -265,6 +265,20 @@ model SecurityLog {
   @@map("security_logs")
 }
 
+
+model LoginAttempt {
+  id         String   @id @default(uuid())
+  login      String
+  ipAddress  String
+  attempts   Int      @default(1)
+  lastAttempt DateTime @default(now())
+
+  @@unique([login, ipAddress])
+  @@index([login])
+  @@index([ipAddress])
+  @@map("login_attempts")
+}
+
 // ==================== АКАДЕМИЧЕСКИЕ МОДЕЛИ ====================
 // Предметы
 model Subject {

@@ -49,8 +49,8 @@ export class AuthApplicationService {
     // всё ок
     await this.securityService.logSecurityEvent(user.id, 'SUCCESSFUL_LOGIN', metadata || {});
 
-    const accessToken = this.jwtService.sign({ sub: user.id, email: user.email });
-    const refreshToken = this.jwtService.sign({ sub: user.id }, { expiresIn: '7d' });
+    const accessToken = this.jwtService.generateAccessToken({ sub: user.id, email: user.email });
+    const refreshToken = this.jwtService.generateRefreshToken({ sub: user.id });
 
     return {
       success: true,
