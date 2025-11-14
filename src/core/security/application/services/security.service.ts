@@ -1,54 +1,33 @@
-// src/core/auth/application/services/security.service.ts
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/core/database/prisma.service';
+import { Injectable, ForbiddenException } from '@nestjs/common';
+import { AttemptService } from './attempt.service';
+import { SecurityLogService } from './security-log.service';
 
 @Injectable()
 export class SecurityService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly attempts: AttemptService,
+    private readonly logs: SecurityLogService,
+  ) {}
 
-  async logSecurityEvent(
-    userId: string | null,
-    event: string,
-    metadata: { ip?: string; userAgent?: string; email?: string; login?: string }
-  ) {
-    try {
-      await this.prisma.securityLog.create({
-        data: {
-          userId,
-          event,
-          ipAddress: metadata.ip,
-          userAgent: metadata.userAgent,
-          
-          timestamp: new Date(),
-        },
-      });
-    } catch (error) {
-      
-      console.error('Failed to log security event:', error);
+  async validateLoginAttempt(login: string, ip?: string) {
+    const locked = await this.attempts.isLocked(login, ip);
+    if (locked) {
+      await this.logs.loginFailure(login, ip);
+      throw new ForbiddenException('Слишком много попыток входа. Попробуйте позже.');
     }
   }
 
-  async checkSuspiciousActivity(email: string, ip: string): Promise<boolean> {
-    try {
-      
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
-      const recentAttempts = await this.prisma.securityLog.count({
-        where: {
-          OR: [{ userId: email }, { ipAddress: ip }],
-          event: { in: ['FAILED_LOGIN', 'SUCCESSFUL_LOGIN'] },
-          timestamp: { gte: oneHourAgo },
-        },
-      });
-
-      return recentAttempts > 10;
-    } catch (error) {
-      return false;
-    }
+  async registerFailure(login: string, ip?: string, ua?: string) {
+    await this.attempts.increase(login, ip);
+    await this.logs.loginFailure(login, ip, ua);
   }
 
+  async registerSuccess(userId: string, login: string, ip?: string, ua?: string) {
+    await this.attempts.reset(login, ip);
+    await this.logs.loginSuccess(userId, ip, ua);
+  }
 
-  async logFailedAttempt(login: string) {
-    await this.logSecurityEvent(null, 'FAILED_LOGIN', login ? { login } : {});
+  async registerLogout(userId: string, ip?: string, ua?: string) {
+    await this.logs.logout(userId, ip, ua);
   }
 }

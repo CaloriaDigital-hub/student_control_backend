@@ -22,7 +22,7 @@ export class AuthApplicationService {
 
     if (!user) {
       
-      await this.securityService.logSecurityEvent(user, 'FAILED_LOGIN', metadata || {});
+      await this.securityService.registerFailure(null, 'FAILED_LOGIN', metadata || {});
       return {
         success: false,
         message: 'Неверный логин или пароль',
@@ -46,7 +46,7 @@ export class AuthApplicationService {
       };
     }
 
-    // всё ок
+    
     await this.securityService.logSecurityEvent(user.id, 'SUCCESSFUL_LOGIN', metadata || {});
 
     const accessToken = this.jwtService.generateAccessToken({ sub: user.id, email: user.email });

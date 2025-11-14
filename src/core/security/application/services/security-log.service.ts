@@ -1,31 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { SecurityLogRepository } from '../../infrastructure/security-log.repository';
-import { SecurityEvent } from '../../domain/security-event.enum';
+import { SecurityLogRepository } from '../../infrastructure/repository/security-log.repository';
+import { SecurityEvent } from '../../domain/event/security-event.enum';
 
 @Injectable()
 export class SecurityLogService {
-  constructor(private repo: SecurityLogRepository) {}
+  constructor(private readonly repo: SecurityLogRepository) {}
 
   loginSuccess(userId: string, ip?: string, ua?: string) {
     return this.repo.createLog({
       event: SecurityEvent.SUCCESSFUL_LOGIN,
       userId,
+      timestamp: new Date(),
       ipAddress: ip,
       userAgent: ua,
-      timestamp: new Date(),
     });
   }
-
-       timestamp: Date;
 
   loginFailure(login: string, ip?: string, ua?: string) {
     return this.repo.createLog({
       event: SecurityEvent.FAILED_LOGIN,
-      metadata: login,
-      userId: null,
+      metadata: { login },
+        timestamp: new Date(),
       ipAddress: ip,
       userAgent: ua,
-      timestamp: new Date(),
     });
   }
 
@@ -33,7 +30,7 @@ export class SecurityLogService {
     return this.repo.createLog({
       event: SecurityEvent.LOGOUT,
       userId,
-      timestamp: new Date(),
+        timestamp: new Date(),
       ipAddress: ip,
       userAgent: ua,
     });
