@@ -34,7 +34,7 @@ enum DayOfWeek {
 
 enum WeekType {
   EVEN // Четная неделя
-  ODD  // Нечетная неделя
+  ODD // Нечетная неделя
 }
 
 enum AttendanceStatus {
@@ -70,7 +70,7 @@ model UserRole {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   role       SystemRole
   assignedAt DateTime   @default(now())
-  assignedBy String     // userId того, кто назначил
+  assignedBy String // userId того, кто назначил
   isActive   Boolean    @default(true)
 
   profile Profile?
@@ -92,7 +92,7 @@ model Profile {
   firstName   String
   lastName    String
   middleName  String?
-  gender      String?   // 'male' | 'female' | 'other'
+  gender      String? // 'male' | 'female' | 'other'
   dateOfBirth DateTime?
   phone       String?
   address     String?
@@ -175,7 +175,7 @@ model AdminProfile {
   department      String?
   position        String?
   permissions     String[] // Список разрешений
-  scope           String?  // Область ответственности
+  scope           String? // Область ответственности
   experienceYears Int?
 
   @@map("admin_profiles")
@@ -200,7 +200,7 @@ model DepartmentHeadProfile {
 // ==================== ЗАЯВКИ ====================
 model Application {
   id     String            @id @default(uuid())
-  type   String            // 'NEW_USER' | 'ROLE_CHANGE' | 'PROFILE_UPDATE'
+  type   String // 'NEW_USER' | 'ROLE_CHANGE' | 'PROFILE_UPDATE'
   status ApplicationStatus @default(PENDING)
 
   // Данные заявителя
@@ -210,7 +210,7 @@ model Application {
 
   // Запрашиваемые данные
   requestedRole SystemRole
-  justification String        @db.Text
+  justification String     @db.Text
   faculty       String?
   department    String?
   position      String?
@@ -241,6 +241,10 @@ model Session {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  device       String?
+  location     String? // Устройство (например, мобильное, десктоп и т.д.)
 
   @@index([userId])
   @@index([refreshToken])
@@ -252,12 +256,13 @@ model SecurityLog {
   id        String   @id @default(uuid())
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  event     String   // 'LOGIN' | 'LOGOUT' | 'FAILED_LOGIN' | 'PASSWORD_CHANGE' и т.д.
+  event     String // 'LOGIN' | 'LOGOUT' | 'FAILED_LOGIN' | 'PASSWORD_CHANGE' и т.д.
   ipAddress String?
   userAgent String?
-  metadata  String?  @db.Text // JSON с дополнительными данными
+  metadata  Json? // JSON с дополнительными данными
   timestamp DateTime @default(now())
 
+  // Устройство (например, мобильное, десктоп и т.д.)
   @@index([userId])
   @@index([event])
   @@index([timestamp])
@@ -265,12 +270,11 @@ model SecurityLog {
   @@map("security_logs")
 }
 
-
 model LoginAttempt {
-  id         String   @id @default(uuid())
-  login      String
-  ipAddress  String
-  attempts   Int      @default(1)
+  id          String   @id @default(uuid())
+  login       String
+  ipAddress   String
+  attempts    Int      @default(1)
   lastAttempt DateTime @default(now())
 
   @@unique([login, ipAddress])
@@ -286,7 +290,7 @@ model Subject {
   name        String  @unique
   code        String? @unique
   description String? @db.Text
-  credits     Int?    // Количество кредитов
+  credits     Int? // Количество кредитов
   isActive    Boolean @default(true)
 
   schedules       Schedule[]
@@ -323,14 +327,14 @@ model Schedule {
   subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  
+
   group     String
   dayOfWeek DayOfWeek
   startTime String // "09:00"
   endTime   String // "10:30"
   room      String
   weekType  WeekType? // null = каждую неделю
-  
+
   createdAt DateTime @default(now())
 
   @@index([group])
@@ -349,12 +353,12 @@ model Grade {
   subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  
+
   score     Float
-  maxScore  Float          @default(100) // Максимальный балл
-  gradeType String?        // 'MIDTERM' | 'FINAL' | 'HOMEWORK' | 'QUIZ'
-  dateGiven DateTime       @default(now())
-  comment   String?        @db.Text
+  maxScore  Float    @default(100) // Максимальный балл
+  gradeType String? // 'MIDTERM' | 'FINAL' | 'HOMEWORK' | 'QUIZ'
+  dateGiven DateTime @default(now())
+  comment   String?  @db.Text
 
   @@index([studentId])
   @@index([subjectId])
@@ -365,12 +369,12 @@ model Grade {
 
 // Посещаемость
 model Attendance {
-  id        String           @id @default(uuid())
+  id        String         @id @default(uuid())
   studentId String
-  student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   subjectId String
-  subject   Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  
+  subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
   date    DateTime
   status  AttendanceStatus
   comment String?          @db.Text
@@ -386,17 +390,17 @@ model Attendance {
 // ==================== КОНТРАКТЫ И ФИНАНСЫ ====================
 // Контракты студентов
 model Contract {
-  id             String         @id @default(uuid())
-  studentId      String
-  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+  id        String         @id @default(uuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
   contractNumber String   @unique
-  contractType   String   // 'FULL' | 'PARTIAL' | 'FREE'
+  contractType   String // 'FULL' | 'PARTIAL' | 'FREE'
   amount         Float
   startDate      DateTime
   endDate        DateTime
   isActive       Boolean  @default(true)
-  
+
   debts     ContractDebt[]
   createdAt DateTime       @default(now())
 
@@ -408,10 +412,10 @@ model Contract {
 
 // Задолженности по контракту
 model ContractDebt {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   contractId String
-  contract   Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
   amountDue   Float
   dueDate     DateTime
   paid        Boolean   @default(false)

@@ -1,7 +1,8 @@
 // src/core/auth/auth.module.ts
-import { Module } from '@nestjs/common';
+import { Module, Session } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { UserModule } from 'src/modules/user/user.module';
+import { SessionModule } from 'src/core/sessions/session.module';
 import { AuthApplicationService } from './application/services/auth.service';
 
 import { AuthResolver } from './infrastructure/resolvers/auth.resolver';
@@ -13,7 +14,8 @@ import { SecurityService } from '../security/security.public';
   imports: [
     UserModule,
     PassportModule,
-    SecurityModule
+    SecurityModule,
+    SessionModule
     
   ],
   providers: [

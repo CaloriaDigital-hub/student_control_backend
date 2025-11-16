@@ -41,6 +41,7 @@ export class UserPrismaRepository extends UserRepository {
   }
 
 
+  
   async getUserRoles(id: string): Promise<UserRole[]> {
     return this.prisma.userRole.findMany({ where: { userId: id } });
   }
@@ -54,12 +55,12 @@ export class UserPrismaRepository extends UserRepository {
   }
 
   async getRoleNames(id: string): Promise<SystemRole[]> {
-  const roles = await this.prisma.userRole.findMany({
-    where: { userId: id, isActive: true },
-    select: { role: true },
-  });
-  return roles.map(r => r.role);
-}
+    const roles = await this.prisma.userRole.findMany({
+      where: { userId: id, isActive: true },
+      select: { role: true },
+    });
+    return roles.map(r => r.role);
+  }
   private toDomain(prismaUser: any): User {
     return new User(
       prismaUser.id,

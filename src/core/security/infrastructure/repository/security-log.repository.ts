@@ -14,10 +14,7 @@ export class SecurityLogRepository {
     metadata?: any;
   }) {
     return this.prisma.securityLog.create({
-      data: {
-        ...data,
-        metadata: data.metadata ? JSON.stringify(data.metadata) : null
-      }
+      data
     });
   }
 }

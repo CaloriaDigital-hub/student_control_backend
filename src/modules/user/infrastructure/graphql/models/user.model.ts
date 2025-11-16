@@ -11,4 +11,16 @@ export class UserModel {
 
   @Field()
   createdAt: Date;
+
+  @Field({nullable: true})
+  isActive: boolean;
+
+  @Field({nullable: true})
+  login: string;
+
+  @Field({ nullable: true })
+  updatedAt?: Date;
+
+  @Field({ nullable: true })
+  deletedAt?: Date;
 }
