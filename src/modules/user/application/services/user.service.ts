@@ -1,12 +1,12 @@
 // src/modules/user/application/services/user.service.ts
-import { Injectable, Query } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserRepository } from '../../domain/repositories/user-repository.interface';
 import { User } from '../../domain/entities/user.entity';
-import { SystemRole, UserRole } from '@prisma/client';
+import { SystemRole } from '@prisma/client';
 
 @Injectable()
 export class UserApplicationService {
-  constructor(private readonly userRepository: UserRepository) { }
+  constructor(private readonly userRepository: UserRepository) {}
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
@@ -16,7 +16,11 @@ export class UserApplicationService {
     return this.userRepository.findById(id);
   }
 
-  async create(createData: { login: string; email: string; password: string }): Promise<User> {
+  async create(createData: {
+    login: string;
+    email: string;
+    password: string;
+  }): Promise<User> {
     return this.userRepository.create(createData);
   }
 
@@ -24,14 +28,9 @@ export class UserApplicationService {
     return this.userRepository.update(id, { password: newPassword });
   }
 
-
-
   async getUserRoles(id: string): Promise<SystemRole[]> {
-    const roles = await this.userRepository.getRoleNames(id);
-
-    return roles;
+    return this.userRepository.getRoleNames(id);
   }
-
 
   async findByLogin(login: string): Promise<User | null> {
     return this.userRepository.findByLogin(login);
